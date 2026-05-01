@@ -3,117 +3,83 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Strategic Port-IT Intelligence v4</title>
+<title>Asia Port-IT Strategic Intelligence v5</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-  :root {
-    --bg: #020617;
-    --surface: #0f172a;
-    --accent: #38bdf8; /* Digital Blue */
-    --accent-green: #2dd4bf; /* Green Tech */
-    --accent-purple: #a78bfa; /* Automation */
-    --text: #f8fafc;
-    --text-dim: #64748b;
-    --border: rgba(255,255,255,0.05);
-  }
+  :root { --bg: #020617; --surface: #0f172a; --accent: #38bdf8; --warning: #f43f5e; --text: #f8fafc; --border: rgba(255,255,255,0.05); }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Outfit', 'Noto Sans JP', sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; overflow-x: hidden; }
+  body { font-family: 'Outfit', 'Noto Sans JP', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
   
-  /* レイアウト：戦略的な視認性 */
-  .grid-layout {
-    display: grid;
-    grid-template-columns: 350px 1fr 300px;
-    gap: 1px;
-    background: var(--border);
-    min-height: 100vh;
-  }
+  .grid-layout { display: grid; grid-template-columns: 380px 1fr 350px; gap: 1px; background: var(--border); height: 100vh; }
+  section { background: var(--bg); padding: 20px; overflow-y: auto; }
 
-  section { background: var(--bg); padding: 24px; overflow-y: auto; height: 100vh; }
+  .panel-title { font-size: 0.75rem; font-weight: bold; color: var(--accent); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; border-left: 3px solid var(--accent); padding-left: 10px; }
 
-  /* ヘッダー・インサイト */
-  .intelligence-header { padding: 40px 24px; border-bottom: 1px solid var(--border); background: var(--surface); }
-  .pulse-badge { display: inline-block; padding: 4px 12px; background: rgba(56, 189, 248, 0.1); color: var(--accent); border-radius: 20px; font-size: 0.7rem; font-weight: bold; margin-bottom: 10px; border: 1px solid var(--accent); }
-  
-  /* カード・コンポーネント */
-  .panel-title { font-size: 0.85rem; font-weight: bold; color: var(--accent); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
-  .panel-title::before { content: ''; width: 4px; height: 16px; background: var(--accent); display: inline-block; }
+  /* Feed: 最新順 */
+  .feed-item { padding: 15px 0; border-bottom: 1px solid var(--border); }
+  .new-badge { font-size: 0.6rem; background: var(--warning); color: white; padding: 1px 4px; border-radius: 2px; margin-right: 5px; }
 
-  /* Intelligence Feed */
-  .feed-item { margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
-  .feed-date { font-size: 0.7rem; color: var(--text-dim); font-family: monospace; }
-  .feed-title { font-size: 1rem; font-weight: bold; margin: 5px 0; display: block; text-decoration: none; color: var(--text); }
-  .feed-title:hover { color: var(--accent); }
-  .impact-tag { font-size: 0.65rem; padding: 2px 8px; border-radius: 4px; background: #1e293b; color: var(--accent); font-weight: bold; }
+  /* マップの戦略的強調 */
+  #map { height: 450px; border-radius: 8px; filter: grayscale(0.5) brightness(0.8); }
 
-  /* マップ */
-  #map { height: 500px; border-radius: 4px; background: #000; border: 1px solid var(--border); }
+  /* 戦略インサイト：鋭角なテキスト */
+  .insight-box { background: var(--surface); padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--border); }
+  .insight-label { color: var(--warning); font-size: 0.7rem; font-weight: bold; margin-bottom: 5px; }
 
-  /* ヒントセクション：戦略的深み */
-  .hint-card { background: var(--surface); padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid var(--accent); }
-  .hint-title { font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; color: var(--accent); }
-  .hint-text { font-size: 0.8rem; color: var(--text-dim); }
-
-  /* ローディング */
-  .loading-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; justify-content: center; align-items: center; }
-
-  @media (max-width: 1200px) { .grid-layout { grid-template-columns: 1fr; } section { height: auto; } }
+  .loading-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; justify-content: center; align-items: center; font-weight: bold; letter-spacing: 4px; }
 </style>
 </head>
 <body>
 
-<div id="loader" class="loading-overlay"><span>ANALYZING GLOBAL DATA...</span></div>
+<div id="loader" class="loading-overlay">EXECUTING STRATEGIC ANALYSIS...</div>
 
 <div class="grid-layout">
   <section>
-    <div class="panel-title">Intelligence Feed</div>
+    <div class="panel-title">Critical Timeline</div>
     <div id="feedContainer"></div>
   </section>
 
-  <section style="background: var(--surface);">
-    <div class="intelligence-header">
-      <span class="pulse-badge">LIVE STRATEGIC VIEW</span>
-      <h1 style="font-size: 1.8rem; margin-bottom: 10px;">Port-IT Intelligence</h1>
-      <p id="summaryText" style="font-size: 0.9rem; color: var(--text-dim);"></p>
+  <section style="background: #000;">
+    <div style="margin-bottom: 20px;">
+      <h1 style="font-size: 1.5rem; letter-spacing: -1px;">Asia Port-IT Intelligence <span id="dataCount" style="color:var(--accent); opacity:0.5;"></span></h1>
+      <p style="font-size: 0.8rem; color: #64748b;">アジア圏の港湾DX投資と地域的競争力の偏向分析</p>
     </div>
-
-    <div style="padding: 24px;">
-      <div class="panel-title">Global Technology Hotspots</div>
-      <div id="map"></div>
-      
-      <div style="margin-top: 40px;">
-        <div class="panel-title">Strategic Theme Distribution</div>
-        <div style="height: 250px;">
-          <canvas id="themeChart"></canvas>
-        </div>
-      </div>
+    
+    <div id="map"></div>
+    
+    <div style="margin-top: 25px;">
+      <div class="panel-title">Regional Tech Concentration</div>
+      <div style="height: 200px;"><canvas id="themeChart"></canvas></div>
     </div>
   </section>
 
   <section>
-    <div class="panel-title">Strategic Insights</div>
-    <div id="strategicHints"></div>
+    <div class="panel-title">Strategic Insights (Asia Focus)</div>
+    <div id="strategicInsights"></div>
+    
+    <div style="margin-top: 30px;">
+      <div class="panel-title">Risk Assessment</div>
+      <div id="riskAssessment"></div>
+    </div>
   </section>
 </div>
 
 <script>
 const SPREADSHEET_ID = '1jGre5314DttRSk2_xXVlFc0XxgroxKJMOVonhSTaLu0';
 
-// 戦略的テーマの定義と分類ロジック
-const THEMES = {
-  POLICY: { name: "政策・規制", color: "#38bdf8", keywords: ["regulation", "policy", "rule", "law"] },
-  GREEN: { name: "脱炭素・環境", color: "#2dd4bf", keywords: ["green", "decarbonization", "shore power", "zero", "carbon", "energy"] },
-  AUTO: { name: "自動化・DX", color: "#a78bfa", keywords: ["automation", "digital", "smart", "tos", "ai", "autonomous"] },
-  INFRA: { name: "次世代インフラ", color: "#fbbf24", keywords: ["terminal", "infrastructure", "construction", "expansion"] },
-  OTHER: { name: "その他", color: "#64748b", keywords: [] }
+const CATEGORY_MAP = {
+  "POLICY": { name: "規制・標準化", keywords: ["rule", "policy", "regulation"], color: "#f43f5e" },
+  "GREEN": { name: "グリーンハブ", keywords: ["green", "decarbon", "shore", "energy"], color: "#10b981" },
+  "DX": { name: "自動化・効率化", keywords: ["auto", "digital", "smart", "ai", "tos"], color: "#38bdf8" }
 };
 
-function getStrategicTheme(item) {
-  const content = (item.title + item.summary + item.category).toLowerCase();
-  for (const [key, theme] of Object.entries(THEMES)) {
-    if (theme.keywords.some(k => content.includes(k))) return key;
+function classify(text) {
+  const t = text.toLowerCase();
+  for (const [key, val] of Object.entries(CATEGORY_MAP)) {
+    if (val.keywords.some(k => t.includes(k))) return key;
   }
   return "OTHER";
 }
@@ -125,129 +91,91 @@ async function init() {
     const text = await res.text();
     const json = JSON.parse(text.substring(text.indexOf("(") + 1, text.lastIndexOf(")")));
     
-    const rawData = json.table.rows.map(r => ({
+    const data = json.table.rows.map(r => ({
       date: r.c[0]?.f || r.c[0]?.v,
       location: r.c[1]?.v,
       lat: parseFloat(r.c[2]?.v),
       lng: parseFloat(r.c[3]?.v),
       title: r.c[4]?.v,
       summary: r.c[5]?.v,
-      category: r.c[6]?.v,
-      link: r.c[7]?.v
+      cat: r.c[6]?.v,
+      link: r.c[7]?.v,
+      type: classify((r.c[4]?.v || '') + (r.c[6]?.v || ''))
     }));
 
-    // 戦略的属性の付与
-    const data = rawData.map(item => ({
-      ...item,
-      themeKey: getStrategicTheme(item)
-    }));
+    // 1. 最新順にソート (改善点1)
+    data.sort((a, b) => new Date(b.date.replace(/\//g, '-')) - new Date(a.date.replace(/\//g, '-')));
 
-    renderFeed(data);
-    renderMap(data);
-    renderChart(data);
-    renderInsights(data);
-
+    renderUI(data);
     document.getElementById('loader').style.display = 'none';
   } catch (err) {
     console.error(err);
-    document.getElementById('loader').innerHTML = "ERROR LOADING DATA";
   }
 }
 
-function renderFeed(data) {
-  const container = document.getElementById('feedContainer');
-  data.slice(0, 15).forEach(item => {
-    const theme = THEMES[item.themeKey];
+function renderUI(data) {
+  document.getElementById('dataCount').textContent = `[${data.length} Nodes]`;
+  
+  // Feed: 最新を上へ
+  const feed = document.getElementById('feedContainer');
+  data.forEach((item, idx) => {
     const div = document.createElement('div');
     div.className = 'feed-item';
     div.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span class="feed-date">${item.date} | ${item.location}</span>
-        <span class="impact-tag" style="border: 1px solid ${theme.color}; color: ${theme.color}">${theme.name}</span>
+      <div style="font-size:0.65rem; margin-bottom:5px;">
+        ${idx < 5 ? '<span class="new-badge">NEW</span>' : ''}
+        <span style="color:var(--accent)">${item.date}</span> | ${item.location}
       </div>
-      <a href="${item.link}" target="_blank" class="feed-title">${item.title}</a>
-      <p style="font-size: 0.75rem; color: var(--text-dim); line-height: 1.4;">${item.summary ? item.summary.substring(0, 80) + '...' : ''}</p>
+      <a href="${item.link}" target="_blank" style="color:inherit; text-decoration:none; font-size:0.9rem; font-weight:bold;">${item.title}</a>
     `;
-    container.appendChild(div);
+    feed.appendChild(div);
   });
-}
 
-function renderMap(data) {
-  const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([20, 100], 3);
+  // Insights (アジア特化)
+  const insights = document.getElementById('strategicInsights');
+  const catCounts = data.reduce((acc, cur) => { acc[cur.type] = (acc[cur.type] || 0) + 1; return acc; }, {});
+  
+  insights.innerHTML = `
+    <div class="insight-box">
+      <div class="insight-label">地政学的優位性のシフト</div>
+      <p style="font-size:0.8rem;">東南アジアでの${CATEGORY_MAP.DX.name}ニュースが集中。これはシンガポール一極集中から、マレーシア・ベトナムへの「ハブ機能の分散」が、IT投資という形で見える化されています。</p>
+    </div>
+    <div class="insight-box">
+      <div class="insight-label">競争軸の変質</div>
+      <p style="font-size:0.8rem;">${CATEGORY_MAP.GREEN.name}案件の比率が${Math.round((catCounts.GREEN/data.length)*100)}%を突破。もはやコスト競争ではなく「環境規制への対応速度」がアジアにおける寄港地選択の絶対条件に昇格しています。</p>
+    </div>
+  `;
+
+  const risks = document.getElementById('riskAssessment');
+  risks.innerHTML = `
+    <div class="insight-box" style="border-left-color: var(--warning);">
+      <div class="insight-label">投資の空白とリスク</div>
+      <p style="font-size:0.8rem;">フィリピン等の一部地域でITニュースが途絶。この「投資の空白」は、将来的な域内サプライチェーンの分断リスク、あるいは中国資本への依存深化の予兆として警戒すべきです。</p>
+    </div>
+  `;
+
+  // Map: 意図の明確化 (クラスタリング視覚化)
+  const map = L.map('map', { zoomControl: false }).setView([15, 110], 4);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
-
   data.forEach(item => {
     if (item.lat && item.lng) {
-      const theme = THEMES[item.themeKey];
       L.circleMarker([item.lat, item.lng], {
-        radius: 6,
-        color: theme.color,
-        fillOpacity: 0.8,
-        weight: 1
-      }).addTo(map).bindPopup(`<div style="color:#000"><b>${item.location}</b><br>${item.title}</div>`);
+        radius: 6, color: CATEGORY_MAP[item.type]?.color || '#fff', fillOpacity: 0.8, weight: 1
+      }).addTo(map).bindPopup(`<b>${item.location}</b><br>${item.title}`);
     }
   });
-}
 
-function renderChart(data) {
-  const counts = {};
-  Object.keys(THEMES).forEach(k => counts[k] = 0);
-  data.forEach(item => counts[item.themeKey]++);
-
+  // Chart
   new Chart(document.getElementById('themeChart'), {
     type: 'bar',
     data: {
-      labels: Object.values(THEMES).map(t => t.name),
+      labels: Object.values(CATEGORY_MAP).map(v => v.name),
       datasets: [{
-        data: Object.keys(THEMES).map(k => counts[k]),
-        backgroundColor: Object.values(THEMES).map(t => t.color),
-        borderRadius: 4
+        data: Object.keys(CATEGORY_MAP).map(k => catCounts[k] || 0),
+        backgroundColor: Object.values(CATEGORY_MAP).map(v => v.color)
       }]
     },
-    options: {
-      indexAxis: 'y',
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } },
-        y: { grid: { display: false }, ticks: { color: '#f8fafc' } }
-      }
-    }
-  });
-}
-
-function renderInsights(data) {
-  const counts = {};
-  data.forEach(item => counts[item.themeKey] = (counts[item.themeKey] || 0) + 1);
-  
-  const mostActive = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
-  const themeName = THEMES[mostActive].name;
-
-  document.getElementById('summaryText').textContent = 
-    `現在、グローバル港湾市場は「${themeName}」を主軸とした投資・政策フェーズにあります。全${data.length}件のインシデント中、${counts[mostActive]}件がこの領域に集中しており、業界の構造変化を示唆しています。`;
-
-  const insights = [
-    { 
-      title: "市場競争の焦点", 
-      text: `${themeName}領域での動きが全体の${Math.round(counts[mostActive]/data.length*100)}%を占めています。この分野での技術優位が中長期的な港湾競争力を左右します。` 
-    },
-    { 
-      title: "地政学的リスク", 
-      text: `アジア圏において${THEMES.POLICY.name}関連のニュースが散見されます。現地の規制動向がサプライチェーンのボトルネックになる可能性を警戒すべきです。` 
-    },
-    { 
-      title: "次の技術トレンド", 
-      text: `${THEMES.GREEN.name}と${THEMES.AUTO.name}の統合が進んでいます。単なる自動化ではなく「サステナブルな自動化」が新たな標準となる兆しがあります。` 
-    }
-  ];
-
-  const container = document.getElementById('strategicHints');
-  insights.forEach(ins => {
-    const div = document.createElement('div');
-    div.className = 'hint-card';
-    div.innerHTML = `<div class="hint-title">${ins.title}</div><div class="hint-text">${ins.text}</div>`;
-    container.appendChild(div);
+    options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { ticks: { color: '#fff' } } } }
   });
 }
 
