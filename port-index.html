@@ -4,197 +4,153 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Asia-Port-IT-Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
 <style>
-  :root {
-    --bg: #0f172a;
-    --surface: #1e293b;
-    --surface2: #334155;
-    --border: #475569;
-    --text: #f8fafc;
-    --text-muted: #94a3b8;
-    --accent: #38bdf8;
-    --accent2: #2dd4bf;
+  /* 背景色を確実に適用 */
+  html, body {
+    background-color: #0f172a !important; 
+    color: #f8fafc;
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
   }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Noto Sans JP', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 50px; }
-  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 20px 32px; display: flex; align-items: center; justify-content: space-between; }
-  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; padding: 24px 32px; }
-  .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; border-top: 4px solid var(--accent); }
-  .kpi-value { font-size: 32px; font-weight: 700; font-family: 'DM Mono'; color: var(--accent); }
-  .viz-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 0 32px 24px; }
-  #map { height: 400px; background: var(--surface2); border-radius: 12px; border: 1px solid var(--border); }
-  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-  .panel-header { padding: 16px 20px; border-bottom: 1px solid var(--border); font-weight: bold; background: rgba(255,255,255,0.02); }
-  .table-wrapper { padding: 0 32px; }
-  table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: 12px; overflow: hidden; font-size: 13px; }
-  th { text-align: left; padding: 12px; background: var(--surface2); color: var(--text-muted); }
-  td { padding: 12px; border-bottom: 1px solid var(--border); }
-  .error-msg { background: #ef4444; color: white; padding: 20px; margin: 32px; border-radius: 8px; display: none; }
-  @media (max-width: 900px) { .viz-grid { grid-template-columns: 1fr; } }
+  header { background: #1e293b; padding: 20px; border-bottom: 1px solid #475569; }
+  .debug-info {
+    background: #450a0a;
+    color: #fecaca;
+    padding: 15px;
+    margin: 20px;
+    border: 1px solid #dc2626;
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 12px;
+    display: none; /* エラー時のみ表示 */
+  }
+  .container { padding: 20px; max-width: 1200px; margin: 0 auto; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+  .kpi-card { background: #1e293b; padding: 20px; border-radius: 10px; border-top: 4px solid #38bdf8; }
+  #map { height: 400px; border-radius: 10px; margin-bottom: 20px; }
+  table { width: 100%; border-collapse: collapse; background: #1e293b; font-size: 12px; }
+  th, td { padding: 10px; border: 1px solid #334155; text-align: left; }
+  th { background: #334155; }
 </style>
 </head>
 <body>
 
 <header>
-  <div>
-    <h1 id="mainTitle">Asia-Port-IT-Dashboard</h1>
-    <p style="font-size: 11px; color: var(--text-muted);">Port Technology & Logistics News Monitoring</p>
-  </div>
-  <div id="status" style="font-size: 12px; color: var(--accent2);">Loading Data...</div>
+  <h1>Asia-Port-IT-Dashboard</h1>
+  <div id="status">システム起動中...</div>
 </header>
 
-<div id="errorMessage" class="error-msg"></div>
+<div id="debugBox" class="debug-info"></div>
 
-<div class="kpi-grid">
-  <div class="kpi-card">
-    <div style="font-size:11px; color:var(--text-muted);">TOTAL NEWS</div>
-    <div class="kpi-value" id="kpiTotal">0</div>
+<div class="container">
+  <div class="kpi-grid">
+    <div class="kpi-card"><div>ニュース総数</div><div id="count" style="font-size:30px;">--</div></div>
+    <div id="catBox" class="kpi-card"><div>最新ニュース</div><div id="latest" style="font-size:14px; margin-top:10px;">--</div></div>
   </div>
-  <div class="kpi-card" style="border-top-color: var(--accent2);">
-    <div style="font-size:11px; color:var(--text-muted);">DX / AUTOMATION</div>
-    <div class="kpi-value" id="kpiDX">0</div>
-  </div>
-</div>
 
-<div class="viz-grid">
-  <div class="panel">
-    <div class="panel-header">🗺 NEWS LOCATIONS</div>
-    <div id="map"></div>
-  </div>
-  <div class="panel">
-    <div class="panel-header">📊 TOP CATEGORIES</div>
-    <div style="padding:20px; height:340px;">
-      <canvas id="categoryChart"></canvas>
-    </div>
-  </div>
-</div>
+  <div id="map"></div>
 
-<div class="table-wrapper">
-  <div class="panel">
-    <div class="panel-header">📋 RECENT NEWS FEED</div>
-    <div style="overflow-x:auto; max-height:500px;">
-      <table>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Category</th>
-            <th>Location</th>
-            <th>Summary</th>
-            <th>Link</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-      </table>
-    </div>
+  <div style="background:#1e293b; padding:15px; border-radius:10px; overflow-x:auto;">
+    <h3>📊 最新データ一覧</h3>
+    <table id="dataTable">
+      <thead>
+        <tr><th>日付</th><th>場所</th><th>タイトル</th><th>リンク</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </div>
 </div>
 
 <script>
-// 重要：スプレッドシートID
+// --- 設定項目 ---
 const SPREADSHEET_ID = '1jGre5314DttRSk2_xXVlFc0XxgroxKJMOVonhSTaLu0';
+// シート名が「LIST」でない場合、ここを「シート1」や「Sheet1」に変えてみてください
 const SHEET_NAME = 'LIST'; 
 
-async function loadData() {
-  const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
-  try {
-    const res = await fetch(url);
-    const text = await res.text();
-    // JSONPの枠を外す処理
-    const json = JSON.parse(text.replace(/^[^(]+[(]/, '').replace(/[)];?$/, ''));
-    
-    const cols = json.table.cols.map(c => c.label || '');
-    const rows = json.table.rows.map(row => {
-      let obj = {};
-      row.c.forEach((cell, i) => {
-        const key = cols[i] || `col_${i}`;
-        obj[key] = cell ? (cell.f || cell.v || '') : '';
-      });
-      return obj;
-    });
-    return rows;
-  } catch (e) {
-    throw new Error("スプレッドシートの読み込みに失敗しました。共有設定を確認してください。");
-  }
+const debugBox = document.getElementById('debugBox');
+const status = document.getElementById('status');
+
+function showError(msg) {
+  debugBox.style.display = 'block';
+  debugBox.innerHTML += `<div>⚠️ ${msg}</div>`;
+  status.textContent = "エラーが発生しました";
 }
 
-async function init() {
-  const errorEl = document.getElementById('errorMessage');
-  const statusEl = document.getElementById('status');
-
+async function start() {
   try {
-    const data = await loadData();
-    if (!data || data.length === 0) throw new Error("データが見つかりません。");
+    status.textContent = "データ取得中...";
+    
+    // スプレッドシート取得用URL
+    // SHEET_NAMEを使わず、一番左のタブ（gid=0）を直接指定する方式に変更
+    const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=0`;
+    
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Googleへの接続に失敗しました");
+    
+    const text = await response.text();
+    // Googleの特殊なJSON形式を解析
+    const jsonData = JSON.parse(text.substring(text.indexOf("(") + 1, text.lastIndexOf(")")));
+    
+    const rows = jsonData.table.rows;
+    const cols = jsonData.table.cols.map(c => c.label);
+    
+    if (!rows || rows.length === 0) {
+      showError("スプレッドシートの中にデータが見つかりません。");
+      return;
+    }
 
-    statusEl.textContent = "Last updated: " + new Date().toLocaleTimeString();
+    status.textContent = "データ処理中...";
+    document.getElementById('count').textContent = rows.length + " 件";
 
-    // 1. KPIの表示
-    document.getElementById('kpiTotal').textContent = data.length;
-    const dxCount = data.filter(r => 
-      (r['カテゴリ'] || '').includes('DX') || (r['カテゴリ'] || '').includes('自動化')
-    ).length;
-    document.getElementById('kpiDX').textContent = dxCount;
-
-    // 2. テーブルの描画 (ユーザーの列名「配信日」「場所」「LINK」を使用)
-    const tbody = document.getElementById('tableBody');
-    data.forEach(r => {
+    const tbody = document.querySelector('#dataTable tbody');
+    
+    // データのマッピングと表示
+    rows.forEach((row, index) => {
+      const d = row.c;
+      // 列の順番を想定: 0:日付, 1:場所, 2:緯度, 3:経度, 4:タイトル, 5:要約, 6:カテゴリ, 7:LINK
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td style="white-space:nowrap;">${r['配信日'] || '—'}</td>
-        <td><span style="color:var(--accent); font-weight:500;">${r['カテゴリ'] || 'IT'}</span></td>
-        <td style="font-weight:bold;">${r['場所'] || 'Global'}</td>
-        <td style="font-size:12px;">${(r['タイトル'] || r['要約'] || '—').substring(0, 100)}...</td>
-        <td><a href="${r['LINK']}" target="_blank" style="color:var(--accent); text-decoration:none;">↗</a></td>
+        <td>${d[0] ? d[0].f || d[0].v : ''}</td>
+        <td>${d[1] ? d[1].v : ''}</td>
+        <td>${d[4] ? d[4].v : ''}</td>
+        <td><a href="${d[7] ? d[7].v : '#'}" target="_blank" style="color:#38bdf8">Link</a></td>
       `;
       tbody.appendChild(tr);
     });
 
-    // 3. チャートの描画
-    const catMap = {};
-    data.forEach(r => {
-      const c = r['カテゴリ'] || 'Other';
-      catMap[c] = (catMap[c] || 0) + 1;
-    });
-    
-    new Chart(document.getElementById('categoryChart'), {
-      type: 'doughnut',
-      data: {
-        labels: Object.keys(catMap),
-        datasets: [{
-          data: Object.values(catMap),
-          backgroundColor: ['#38bdf8', '#2dd4bf', '#fbbf24', '#a78bfa', '#f472b6'],
-          borderWidth: 0
-        }]
-      },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8' } } } }
-    });
+    // 最新ニュースのタイトルを表示
+    if(rows[0] && rows[0].c[4]) {
+      document.getElementById('latest').textContent = rows[0].c[4].v;
+    }
 
-    // 4. マップの描画
+    // 地図の初期化
     const map = L.map('map').setView([20, 120], 3);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
 
-    data.forEach(r => {
-      const lat = parseFloat(r['緯度']);
-      const lng = parseFloat(r['経度']);
-      if(!isNaN(lat) && !isNaN(lng)) {
-        L.circleMarker([lat, lng], {
-          radius: 8, color: '#38bdf8', fillColor: '#38bdf8', fillOpacity: 0.6, weight: 1
-        }).addTo(map).bindPopup(`<b>${r['場所']}</b><br>${r['タイトル'] || ''}`);
+    rows.forEach(row => {
+      const d = row.c;
+      const lat = d[2] ? parseFloat(d[2].v) : null;
+      const lng = d[3] ? parseFloat(d[3].v) : null;
+      if (lat && lng) {
+        L.marker([lat, lng]).addTo(map).bindPopup(d[4] ? d[4].v : "Port IT News");
       }
     });
 
-  } catch (e) {
-    statusEl.textContent = "Error";
-    errorEl.style.display = 'block';
-    errorEl.textContent = e.message;
-    console.error(e);
+    status.textContent = "更新完了: " + new Date().toLocaleTimeString();
+
+  } catch (err) {
+    showError(err.message);
+    console.error(err);
   }
 }
 
-document.addEventListener('DOMContentLoaded', init);
+// 実行
+start();
 </script>
 </body>
 </html>
