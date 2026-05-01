@@ -3,199 +3,194 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Port IT News Dashboard v.01</title>
+<title>Asia-Port-IT-Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
   :root {
-    --bg: #0f172a; /* 深海のようなネイビー */
+    --bg: #0f172a;
     --surface: #1e293b;
     --surface2: #334155;
     --border: #475569;
     --text: #f8fafc;
     --text-muted: #94a3b8;
-    --accent: #38bdf8; /* テック系シアン */
-    --accent2: #2dd4bf; /* エメラルド（クリーンエネルギー） */
-    --accent3: #fbbf24; /* 注目ニュース */
-    --dx-color: #38bdf8;
-    --green-color: #2dd4bf;
-    --other-color: #94a3b8;
+    --accent: #38bdf8;
+    --accent2: #2dd4bf;
   }
-  /* 以下、デザインスタイルは共通（色調のみ変更） */
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Noto Sans JP', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
-  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 20px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
-  .header-left { display: flex; align-items: center; gap: 16px; }
-  .ship-icon { font-size: 28px; }
-  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 24px 32px; }
-  .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; position: relative; overflow: hidden; }
-  .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
-  .kpi-card.blue::before { background: var(--accent); }
-  .kpi-card.green::before { background: var(--accent2); }
-  .kpi-value { font-size: 40px; font-weight: 700; font-family: 'DM Mono', monospace; color: var(--accent); }
-  
-  /* パネル・マップ・チャート等の基本構造は前コードを継承 */
-  main { padding: 0 32px 24px; max-width: 1400px; margin: 0 auto; }
-  .viz-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-  #map { height: 420px; background: var(--surface2); border-radius: 12px; }
+  body { font-family: 'Noto Sans JP', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 50px; }
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 20px 32px; display: flex; align-items: center; justify-content: space-between; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; padding: 24px 32px; }
+  .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; border-top: 4px solid var(--accent); }
+  .kpi-value { font-size: 32px; font-weight: 700; font-family: 'DM Mono'; color: var(--accent); }
+  .viz-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 0 32px 24px; }
+  #map { height: 400px; background: var(--surface2); border-radius: 12px; border: 1px solid var(--border); }
   .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-  .panel-header { padding: 16px 20px; border-bottom: 1px solid var(--border); font-weight: 700; }
-  
-  /* テーブル用スタイル */
-  table { width: 100%; border-collapse: collapse; font-size: 12px; }
-  th { padding: 12px; text-align: left; background: var(--surface2); color: var(--text-muted); }
+  .panel-header { padding: 16px 20px; border-bottom: 1px solid var(--border); font-weight: bold; background: rgba(255,255,255,0.02); }
+  .table-wrapper { padding: 0 32px; }
+  table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: 12px; overflow: hidden; font-size: 13px; }
+  th { text-align: left; padding: 12px; background: var(--surface2); color: var(--text-muted); }
   td { padding: 12px; border-bottom: 1px solid var(--border); }
-  .category-badge { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 500; }
-  .cat-dx { background: rgba(56, 189, 248, 0.2); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.4); }
+  .error-msg { background: #ef4444; color: white; padding: 20px; margin: 32px; border-radius: 8px; display: none; }
+  @media (max-width: 900px) { .viz-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="header-left">
-    <span class="ship-icon">🚢</span>
-    <div class="header-title">
-      <h1>港湾ITニュース ダッシュボード v.01</h1>
-      <p>Port & Logistics Technology News - Global Monitoring</p>
-    </div>
+  <div>
+    <h1 id="mainTitle">Asia-Port-IT-Dashboard</h1>
+    <p style="font-size: 11px; color: var(--text-muted);">Port Technology & Logistics News Monitoring</p>
   </div>
-  <div class="header-right" style="text-align:right;">
-    <div id="lastUpdated" style="font-size:11px; color:var(--text-muted); font-family:'DM Mono';">Loading...</div>
-    <div style="font-family:'Times New Roman',serif; font-weight:bold; font-style:italic; font-size:11px; color:var(--accent2);">@ Your Project</div>
-  </div>
+  <div id="status" style="font-size: 12px; color: var(--accent2);">Loading Data...</div>
 </header>
 
-<main>
-  <div class="kpi-grid">
-    <div class="kpi-card blue">
-      <div style="font-size:11px; color:var(--text-muted);">総ニュース数</div>
-      <div class="kpi-value" id="kpiTotal">—</div>
-    </div>
-    <div class="kpi-card green">
-      <div style="font-size:11px; color:var(--text-muted);">DX・自動化トピック</div>
-      <div class="kpi-value" id="kpiDX">—</div>
-    </div>
-    <div class="kpi-card blue">
-      <div style="font-size:11px; color:var(--text-muted);">今月の新規導入事例</div>
-      <div class="kpi-value" id="kpiRecent">—</div>
-    </div>
-    <div class="kpi-card green">
-      <div style="font-size:11px; color:var(--text-muted);">掲載ソース数</div>
-      <div class="kpi-value" id="kpiSources">—</div>
-    </div>
-  </div>
+<div id="errorMessage" class="error-msg"></div>
 
-  <div class="viz-grid">
-    <div class="panel">
-      <div class="panel-header">🗺 世界の港湾ITプロジェクト・ニュース地点</div>
-      <div id="map"></div>
-    </div>
-    <div class="panel">
-      <div class="panel-header">📊 カテゴリ別ニュース分布</div>
-      <div style="padding:20px; height:350px;">
-        <canvas id="categoryChart"></canvas>
-      </div>
-    </div>
+<div class="kpi-grid">
+  <div class="kpi-card">
+    <div style="font-size:11px; color:var(--text-muted);">TOTAL NEWS</div>
+    <div class="kpi-value" id="kpiTotal">0</div>
   </div>
+  <div class="kpi-card" style="border-top-color: var(--accent2);">
+    <div style="font-size:11px; color:var(--text-muted);">DX / AUTOMATION</div>
+    <div class="kpi-value" id="kpiDX">0</div>
+  </div>
+</div>
 
+<div class="viz-grid">
   <div class="panel">
-    <div class="panel-header">📋 最新ニュースフィード</div>
-    <div style="overflow-x:auto; max-height:400px;">
+    <div class="panel-header">🗺 NEWS LOCATIONS</div>
+    <div id="map"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-header">📊 TOP CATEGORIES</div>
+    <div style="padding:20px; height:340px;">
+      <canvas id="categoryChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="table-wrapper">
+  <div class="panel">
+    <div class="panel-header">📋 RECENT NEWS FEED</div>
+    <div style="overflow-x:auto; max-height:500px;">
       <table>
         <thead>
           <tr>
-            <th style="width:100px;">日付</th>
-            <th style="width:120px;">カテゴリ</th>
-            <th style="width:150px;">地域/港</th>
-            <th>ニュース概要</th>
-            <th style="width:80px;">リンク</th>
+            <th>Date</th>
+            <th>Category</th>
+            <th>Location</th>
+            <th>Summary</th>
+            <th>Link</th>
           </tr>
         </thead>
         <tbody id="tableBody"></tbody>
       </table>
     </div>
   </div>
-</main>
+</div>
 
 <script>
-// 設定：スプレッドシートIDを港湾ニュースのものに差し替え
+// 重要：スプレッドシートID
 const SPREADSHEET_ID = '1jGre5314DttRSk2_xXVlFc0XxgroxKJMOVonhSTaLu0';
-const SHEET_NAME = 'LIST'; // シート名に合わせて変更してください
+const SHEET_NAME = 'LIST'; 
 
 async function loadData() {
   const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
-  const res = await fetch(url);
-  const text = await res.text();
-  const json = JSON.parse(text.replace(/^[^(]+[(]/, '').replace(/[)];?$/, ''));
-  
-  const cols = json.table.cols.map(c => c.label || '');
-  return json.table.rows.map(row => {
-    let obj = {};
-    row.c.forEach((cell, i) => {
-      if(cols[i]) obj[cols[i]] = cell ? (cell.f || cell.v || '') : '';
+  try {
+    const res = await fetch(url);
+    const text = await res.text();
+    // JSONPの枠を外す処理
+    const json = JSON.parse(text.replace(/^[^(]+[(]/, '').replace(/[)];?$/, ''));
+    
+    const cols = json.table.cols.map(c => c.label || '');
+    const rows = json.table.rows.map(row => {
+      let obj = {};
+      row.c.forEach((cell, i) => {
+        const key = cols[i] || `col_${i}`;
+        obj[key] = cell ? (cell.f || cell.v || '') : '';
+      });
+      return obj;
     });
-    return obj;
-  });
+    return rows;
+  } catch (e) {
+    throw new Error("スプレッドシートの読み込みに失敗しました。共有設定を確認してください。");
+  }
 }
 
 async function init() {
+  const errorEl = document.getElementById('errorMessage');
+  const statusEl = document.getElementById('status');
+
   try {
     const data = await loadData();
-    console.log(data); // デバッグ用
+    if (!data || data.length === 0) throw new Error("データが見つかりません。");
 
-    // KPI計算（例：カテゴリにDXが含まれるものをカウント）
+    statusEl.textContent = "Last updated: " + new Date().toLocaleTimeString();
+
+    // 1. KPIの表示
     document.getElementById('kpiTotal').textContent = data.length;
-    const dxCount = data.filter(r => (r['カテゴリ'] || '').includes('DX') || (r['カテゴリ'] || '').includes('自動化')).length;
+    const dxCount = data.filter(r => 
+      (r['カテゴリ'] || '').includes('DX') || (r['カテゴリ'] || '').includes('自動化')
+    ).length;
     document.getElementById('kpiDX').textContent = dxCount;
 
-    // テーブル描画
+    // 2. テーブルの描画 (ユーザーの列名「配信日」「場所」「LINK」を使用)
     const tbody = document.getElementById('tableBody');
     data.forEach(r => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td style="color:var(--text-muted); font-family:'DM Mono';">${r['ニュース発信日'] || '—'}</td>
-        <td><span class="category-badge cat-dx">${r['カテゴリ'] || 'IT'}</span></td>
-        <td style="font-weight:bold;">${r['発生地域'] || r['港湾名'] || 'Global'}</td>
-        <td style="font-size:11px; color:var(--text-muted);">${r['要約'] || r['タイトル'] || '—'}</td>
-        <td><a href="${r['記事URL']}" target="_blank" style="color:var(--accent); text-decoration:none;">Link ↗</a></td>
+        <td style="white-space:nowrap;">${r['配信日'] || '—'}</td>
+        <td><span style="color:var(--accent); font-weight:500;">${r['カテゴリ'] || 'IT'}</span></td>
+        <td style="font-weight:bold;">${r['場所'] || 'Global'}</td>
+        <td style="font-size:12px;">${(r['タイトル'] || r['要約'] || '—').substring(0, 100)}...</td>
+        <td><a href="${r['LINK']}" target="_blank" style="color:var(--accent); text-decoration:none;">↗</a></td>
       `;
       tbody.appendChild(tr);
     });
 
-    // 簡易チャート（カテゴリ別）
-    const categories = [...new Set(data.map(r => r['カテゴリ']))].filter(Boolean);
-    const catCounts = categories.map(c => data.filter(r => r['カテゴリ'] === c).length);
-
+    // 3. チャートの描画
+    const catMap = {};
+    data.forEach(r => {
+      const c = r['カテゴリ'] || 'Other';
+      catMap[c] = (catMap[c] || 0) + 1;
+    });
+    
     new Chart(document.getElementById('categoryChart'), {
       type: 'doughnut',
       data: {
-        labels: categories,
+        labels: Object.keys(catMap),
         datasets: [{
-          data: catCounts,
-          backgroundColor: ['#38bdf8', '#2dd4bf', '#fbbf24', '#a78bfa', '#f472b6']
+          data: Object.values(catMap),
+          backgroundColor: ['#38bdf8', '#2dd4bf', '#fbbf24', '#a78bfa', '#f472b6'],
+          borderWidth: 0
         }]
       },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#94a3b8' } } } }
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8' } } } }
     });
 
-    // マップ表示（緯度・経度列がある場合）
+    // 4. マップの描画
     const map = L.map('map').setView([20, 120], 3);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
 
     data.forEach(r => {
-      if(r['緯度'] && r['経度']) {
-        L.circleMarker([parseFloat(r['緯度']), parseFloat(r['経度'])], {
-          radius: 8, color: '#38bdf8', fillColor: '#38bdf8', fillOpacity: 0.6
-        }).addTo(map).bindPopup(`<b>${r['発生地域']}</b><br>${r['要約']}`);
+      const lat = parseFloat(r['緯度']);
+      const lng = parseFloat(r['経度']);
+      if(!isNaN(lat) && !isNaN(lng)) {
+        L.circleMarker([lat, lng], {
+          radius: 8, color: '#38bdf8', fillColor: '#38bdf8', fillOpacity: 0.6, weight: 1
+        }).addTo(map).bindPopup(`<b>${r['場所']}</b><br>${r['タイトル'] || ''}`);
       }
     });
 
-    document.getElementById('lastUpdated').textContent = 'Last Sync: ' + new Date().toLocaleString();
-
   } catch (e) {
-    console.error('Data Load Error:', e);
+    statusEl.textContent = "Error";
+    errorEl.style.display = 'block';
+    errorEl.textContent = e.message;
+    console.error(e);
   }
 }
 
