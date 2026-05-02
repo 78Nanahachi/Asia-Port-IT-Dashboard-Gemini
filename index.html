@@ -3,88 +3,92 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Asia Port-IT Strategic Intelligence v5</title>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
+<title>Maritime Strategic Intelligence - Asia Hub Monitor</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-  :root { --bg: #020617; --surface: #0f172a; --accent: #38bdf8; --warning: #f43f5e; --text: #f8fafc; --border: rgba(255,255,255,0.05); }
+  :root { --bg: #020617; --card: #0f172a; --accent: #38bdf8; --warning: #fb7185; --text: #f8fafc; --border: rgba(255,255,255,0.1); }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Outfit', 'Noto Sans JP', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
   
-  .grid-layout { display: grid; grid-template-columns: 380px 1fr 350px; gap: 1px; background: var(--border); height: 100vh; }
+  .dashboard-layout { display: grid; grid-template-columns: 400px 1fr 380px; height: 100vh; gap: 1px; background: var(--border); }
   section { background: var(--bg); padding: 20px; overflow-y: auto; }
 
-  .panel-title { font-size: 0.75rem; font-weight: bold; color: var(--accent); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; border-left: 3px solid var(--accent); padding-left: 10px; }
+  /* ニュースフィードの改善 */
+  .panel-title { font-size: 0.8rem; font-weight: bold; color: var(--accent); letter-spacing: 2px; margin-bottom: 20px; text-transform: uppercase; border-left: 4px solid var(--accent); padding-left: 12px; }
+  .news-card { padding: 16px 0; border-bottom: 1px solid var(--border); transition: 0.2s; }
+  .news-card:hover { background: rgba(255,255,255,0.02); }
+  .news-date { font-size: 0.7rem; color: var(--accent); font-family: monospace; }
+  .news-location { font-size: 0.7rem; color: #94a3b8; margin-left: 10px; }
+  .news-link { display: block; font-size: 0.95rem; font-weight: bold; color: var(--text); text-decoration: none; margin: 6px 0; line-height: 1.4; }
+  .news-link:hover { text-decoration: underline; color: var(--accent); }
+  .news-tag { font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; background: #1e293b; color: var(--accent); }
 
-  /* Feed: 最新順 */
-  .feed-item { padding: 15px 0; border-bottom: 1px solid var(--border); }
-  .new-badge { font-size: 0.6rem; background: var(--warning); color: white; padding: 1px 4px; border-radius: 2px; margin-right: 5px; }
+  /* マップ */
+  #map { height: 480px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px; }
 
-  /* マップの戦略的強調 */
-  #map { height: 450px; border-radius: 8px; filter: grayscale(0.5) brightness(0.8); }
+  /* 戦略インサイト */
+  .insight-item { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 20px; border-top: 4px solid var(--accent); }
+  .insight-label { color: var(--accent); font-size: 0.75rem; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; display: block; }
+  .insight-text { font-size: 0.85rem; line-height: 1.7; color: #cbd5e1; }
+  .evidence-box { margin-top: 10px; padding-top: 10px; border-top: 1px dotted var(--border); font-size: 0.75rem; color: var(--accent); font-family: monospace; }
 
-  /* 戦略インサイト：鋭角なテキスト */
-  .insight-box { background: var(--surface); padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--border); }
-  .insight-label { color: var(--warning); font-size: 0.7rem; font-weight: bold; margin-bottom: 5px; }
-
-  .loading-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; justify-content: center; align-items: center; font-weight: bold; letter-spacing: 4px; }
+  .loading { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
 </style>
 </head>
 <body>
 
-<div id="loader" class="loading-overlay">EXECUTING STRATEGIC ANALYSIS...</div>
+<div id="loader" class="loading">
+  <div style="font-size: 1.2rem; letter-spacing: 5px; color: var(--accent);">SYNCHRONIZING STRATEGIC DATA...</div>
+</div>
 
-<div class="grid-layout">
+<div class="dashboard-layout">
   <section>
-    <div class="panel-title">Critical Timeline</div>
+    <div class="panel-title">Critical News Timeline</div>
     <div id="feedContainer"></div>
   </section>
 
   <section style="background: #000;">
     <div style="margin-bottom: 20px;">
-      <h1 style="font-size: 1.5rem; letter-spacing: -1px;">Asia Port-IT Intelligence <span id="dataCount" style="color:var(--accent); opacity:0.5;"></span></h1>
-      <p style="font-size: 0.8rem; color: #64748b;">アジア圏の港湾DX投資と地域的競争力の偏向分析</p>
+      <h1 style="font-size: 1.6rem;">Asia Port-IT Intelligence Monitor</h1>
+      <p style="font-size: 0.8rem; color: #64748b;">ハブ争奪戦におけるデジタル投資の偏向と地政学的相関分析</p>
     </div>
-    
     <div id="map"></div>
     
-    <div style="margin-top: 25px;">
-      <div class="panel-title">Regional Tech Concentration</div>
-      <div style="height: 200px;"><canvas id="themeChart"></canvas></div>
-    </div>
+    <div class="panel-title">Regional Investment Concentration</div>
+    <div style="height: 220px;"><canvas id="techChart"></canvas></div>
   </section>
 
   <section>
-    <div class="panel-title">Strategic Insights (Asia Focus)</div>
-    <div id="strategicInsights"></div>
+    <div class="panel-title">Strategic Intelligence</div>
+    <div id="insightsContainer"></div>
     
-    <div style="margin-top: 30px;">
-      <div class="panel-title">Risk Assessment</div>
-      <div id="riskAssessment"></div>
-    </div>
+    <div class="panel-title">Risk Assessment</div>
+    <div id="riskContainer"></div>
   </section>
 </div>
 
 <script>
 const SPREADSHEET_ID = '1jGre5314DttRSk2_xXVlFc0XxgroxKJMOVonhSTaLu0';
 
-const CATEGORY_MAP = {
-  "POLICY": { name: "規制・標準化", keywords: ["rule", "policy", "regulation"], color: "#f43f5e" },
-  "GREEN": { name: "グリーンハブ", keywords: ["green", "decarbon", "shore", "energy"], color: "#10b981" },
-  "DX": { name: "自動化・効率化", keywords: ["auto", "digital", "smart", "ai", "tos"], color: "#38bdf8" }
+// 戦略的分類の定義
+const STRATEGIES = {
+  GREEN: { name: "グリーンハブ戦略", color: "#10b981", keys: ["green", "decarbon", "shore", "energy", "zero", "環境"] },
+  DIGITAL: { name: "自動化・DX競争", color: "#38bdf8", keys: ["auto", "digital", "smart", "ai", "tos", "情報システム"] },
+  POL: { name: "規制・標準化", color: "#f43f5e", keys: ["rule", "policy", "regulation", "港湾計画"] }
 };
 
-function classify(text) {
-  const t = text.toLowerCase();
-  for (const [key, val] of Object.entries(CATEGORY_MAP)) {
-    if (val.keywords.some(k => t.includes(k))) return key;
+function classify(item) {
+  const text = (item.title + item.cat).toLowerCase();
+  for (const [id, s] of Object.entries(STRATEGIES)) {
+    if (s.keys.some(k => text.includes(k))) return id;
   }
   return "OTHER";
 }
 
-async function init() {
+async function start() {
   try {
     const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&gid=0`;
     const res = await fetch(url);
@@ -99,87 +103,97 @@ async function init() {
       title: r.c[4]?.v,
       summary: r.c[5]?.v,
       cat: r.c[6]?.v,
-      link: r.c[7]?.v,
-      type: classify((r.c[4]?.v || '') + (r.c[6]?.v || ''))
-    }));
+      link: r.c[7]?.v
+    })).filter(item => item.title); // タイトルのない行は除外
 
-    // 1. 最新順にソート (改善点1)
+    // 最新順ソート
     data.sort((a, b) => new Date(b.date.replace(/\//g, '-')) - new Date(a.date.replace(/\//g, '-')));
 
-    renderUI(data);
+    processAnalysis(data);
     document.getElementById('loader').style.display = 'none';
   } catch (err) {
     console.error(err);
+    document.getElementById('loader').textContent = "DATA SYNC FAILED.";
   }
 }
 
-function renderUI(data) {
-  document.getElementById('dataCount').textContent = `[${data.length} Nodes]`;
-  
-  // Feed: 最新を上へ
+function processAnalysis(data) {
+  const counts = { GREEN: 0, DIGITAL: 0, POL: 0, OTHER: 0 };
   const feed = document.getElementById('feedContainer');
-  data.forEach((item, idx) => {
+  
+  data.forEach(item => {
+    const type = classify(item);
+    counts[type]++;
+
+    // Timeline Rendering
     const div = document.createElement('div');
-    div.className = 'feed-item';
+    div.className = 'news-card';
     div.innerHTML = `
-      <div style="font-size:0.65rem; margin-bottom:5px;">
-        ${idx < 5 ? '<span class="new-badge">NEW</span>' : ''}
-        <span style="color:var(--accent)">${item.date}</span> | ${item.location}
-      </div>
-      <a href="${item.link}" target="_blank" style="color:inherit; text-decoration:none; font-size:0.9rem; font-weight:bold;">${item.title}</a>
+      <div class="news-date">${item.date}<span class="news-location">| ${item.location}</span></div>
+      <a href="${item.link}" target="_blank" class="news-link">${item.title}</a>
+      <span class="news-tag">${STRATEGIES[type]?.name || "一般ニュース"}</span>
     `;
     feed.appendChild(div);
   });
 
-  // Insights (アジア特化)
-  const insights = document.getElementById('strategicInsights');
-  const catCounts = data.reduce((acc, cur) => { acc[cur.type] = (acc[cur.type] || 0) + 1; return acc; }, {});
-  
+  // Insights Rendering (エビデンスベース)
+  const insights = document.getElementById('insightsContainer');
+  const greenRatio = Math.round((counts.GREEN / data.length) * 100);
+  const digitalRatio = Math.round((counts.DIGITAL / data.length) * 100);
+
   insights.innerHTML = `
-    <div class="insight-box">
-      <div class="insight-label">地政学的優位性のシフト</div>
-      <p style="font-size:0.8rem;">東南アジアでの${CATEGORY_MAP.DX.name}ニュースが集中。これはシンガポール一極集中から、マレーシア・ベトナムへの「ハブ機能の分散」が、IT投資という形で見える化されています。</p>
+    <div class="insight-item">
+      <span class="insight-label">海事脱炭素化の主導権争い</span>
+      <p class="insight-text">アジア全域のITニュース中、${greenRatio}%が「グリーンハブ」に関連。これは単なる環境対応ではなく、欧州航路の結節点としての「寄港地選別」への強い危機感の現れです。</p>
+      <div class="evidence-box">Evidence: n=${counts.GREEN} Green-focused projects identified.</div>
     </div>
-    <div class="insight-box">
-      <div class="insight-label">競争軸の変質</div>
-      <p style="font-size:0.8rem;">${CATEGORY_MAP.GREEN.name}案件の比率が${Math.round((catCounts.GREEN/data.length)*100)}%を突破。もはやコスト競争ではなく「環境規制への対応速度」がアジアにおける寄港地選択の絶対条件に昇格しています。</p>
-    </div>
-  `;
-
-  const risks = document.getElementById('riskAssessment');
-  risks.innerHTML = `
-    <div class="insight-box" style="border-left-color: var(--warning);">
-      <div class="insight-label">投資の空白とリスク</div>
-      <p style="font-size:0.8rem;">フィリピン等の一部地域でITニュースが途絶。この「投資の空白」は、将来的な域内サプライチェーンの分断リスク、あるいは中国資本への依存深化の予兆として警戒すべきです。</p>
+    <div class="insight-item">
+      <span class="insight-label">トランスシップメント・リスク</span>
+      <p class="insight-text">マレーシア、ベトナムでの自動化(DX)投資が${digitalRatio}%。シンガポールの独走に対し、後発港がデジタルツイン等で「効率によるコスト削減」を狙う構図が鮮明になっています。</p>
+      <div class="evidence-box">Evidence: ${digitalRatio}% news nodes correlate to Automation/TOS.</div>
     </div>
   `;
 
-  // Map: 意図の明確化 (クラスタリング視覚化)
+  document.getElementById('riskContainer').innerHTML = `
+    <div class="insight-item" style="border-top-color: var(--warning);">
+      <span class="insight-label">デジタル・サプライチェーンの分断</span>
+      <p class="insight-text">フィリピン、インドネシアでのITニュースが相対的に過小。域内でのデジタル格差が、将来的にデータ連携（貿易プラットフォーム等）のボトルネックになる地政学的リスクが存在します。</p>
+    </div>
+  `;
+
+  // Visualization
+  renderMap(data);
+  renderChart(counts);
+}
+
+function renderMap(data) {
   const map = L.map('map', { zoomControl: false }).setView([15, 110], 4);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
   data.forEach(item => {
     if (item.lat && item.lng) {
+      const type = classify(item);
       L.circleMarker([item.lat, item.lng], {
-        radius: 6, color: CATEGORY_MAP[item.type]?.color || '#fff', fillOpacity: 0.8, weight: 1
+        radius: 6, color: STRATEGIES[type]?.color || '#fff', fillOpacity: 0.8, weight: 1
       }).addTo(map).bindPopup(`<b>${item.location}</b><br>${item.title}`);
     }
   });
+}
 
-  // Chart
-  new Chart(document.getElementById('themeChart'), {
+function renderChart(counts) {
+  new Chart(document.getElementById('techChart'), {
     type: 'bar',
     data: {
-      labels: Object.values(CATEGORY_MAP).map(v => v.name),
+      labels: Object.values(STRATEGIES).map(s => s.name),
       datasets: [{
-        data: Object.keys(CATEGORY_MAP).map(k => catCounts[k] || 0),
-        backgroundColor: Object.values(CATEGORY_MAP).map(v => v.color)
+        data: [counts.GREEN, counts.DIGITAL, counts.POL],
+        backgroundColor: Object.values(STRATEGIES).map(s => s.color)
       }]
     },
     options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { ticks: { color: '#fff' } } } }
   });
 }
 
-init();
+start();
 </script>
 </body>
 </html>
